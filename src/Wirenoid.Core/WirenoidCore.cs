@@ -1,4 +1,8 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Docker.DotNet.Models;
+using Microsoft.Extensions.Options;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Wirenoid.Core.Abstracts;
 using Wirenoid.Core.Interfaces;
 using Wirenoid.Core.Models;
@@ -26,6 +30,24 @@ namespace Wirenoid.Core
         public void DeleteLaunch()
         {
             throw new System.NotImplementedException();
+        }
+
+        public async Task<IList<ContainerListResponse>> GetDockerContainers()
+        {
+            return await client.Containers.ListContainersAsync(new ContainersListParameters()
+            {
+                Limit = 10,
+            });
+        }
+
+        public async Task<bool> StopContainerAsync(string containerId)
+        {
+            return await client.Containers.StopContainerAsync(containerId,
+                new ContainerStopParameters
+                {
+                    WaitBeforeKillSeconds = 30
+                },
+                CancellationToken.None);
         }
     }
 }

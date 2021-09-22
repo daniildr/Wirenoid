@@ -19,9 +19,12 @@ namespace Wirenoid.WebApi.Controllers
         }
 
         [HttpGet("containersList")]
-        public async Task<IList<ContainerListResponse>> GetContainersList() => await _wirenoidCore.GetDockerContainers();
+        public async Task<IList<ContainerListResponse>> GetContainersList() => await _wirenoidCore.GetDockerContainersAsync();
 
         [HttpPost("containerStop")]
         public async Task<bool> StopContainer(string dockerId) => await _wirenoidCore.StopContainerAsync(dockerId);
+
+        [HttpGet("createImage")]
+        public async Task<string> CreateImage() => await _wirenoidCore.CreateImageAsync();
     }
 }

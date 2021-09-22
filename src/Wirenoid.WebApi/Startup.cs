@@ -5,9 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Wirenoid.WebApi.DbItems;
 using Wirenoid.Core;
 using Wirenoid.Core.Models;
+using Wirenoid.WebApi.DbItems;
 
 namespace Wirenoid.WebApi
 {
@@ -16,7 +16,7 @@ namespace Wirenoid.WebApi
         private const string _wairenoidCorsPolicyName = "_wirenoidCORSPolicyName";
         private readonly OpenApiContact _apiContact = new()
         {
-            Name = "Daniil DR",
+            Name = "Developed by Daniil Drozdov © DaniilDR",
             Email = "wirenoid-support@daniildr.ru",
             Url = new("https://github.com/daniildr/Wirenoid")
         };
@@ -36,7 +36,10 @@ namespace Wirenoid.WebApi
         {
             services.AddDbContext<CacheDbContext>(opt =>
                 opt.UseInMemoryDatabase("LaunchedCache"));
-            services.Configure<CoreSettings>(Configuration.GetSection("CoreSettings"));
+            services.Configure<DockerHubSettings>(Configuration.GetSection("DockerHubSettings"));
+            services.Configure<DockerSettings>(Configuration.GetSection("DockerSettings"));
+            services.Configure<DockerImageSettings>(Configuration.GetSection("DockerImageSettings"));
+            services.Configure<NetworkSettings>(Configuration.GetSection("NetworkSettings"));
             services.AddCors(options =>
             {
                 options.AddPolicy(name: _wairenoidCorsPolicyName,

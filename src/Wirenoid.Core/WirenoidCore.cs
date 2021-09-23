@@ -17,15 +17,75 @@ namespace Wirenoid.Core
             IOptions<DockerImageSettings> dockerImageSettings)
             : base(dockerSettings, dockerHubSettings, dockerImageSettings) { }
 
-        public async Task<IList<ContainerListResponse>> GetDockerContainersAsync() =>
-            await GetDockerContainersAsync(10);
+        #region Container Manager
+        /// <summary>
+        /// Async methode for getting list of containers (<code>IList<ContainerListResponse></code>) in docker
+        /// </summary>
+        /// <returns><code>IList<ContainerListResponse></code></returns>
+        public async Task<IList<ContainerListResponse>> GetContainersListAsync() =>
+            await GetContainersListAsync(10);
 
-        public async Task<IList<ContainerListResponse>> GetDockerContainersAsync(int limit) =>
+        /// <summary>
+        /// Async methode for geting list of containers (<code>IList<ContainerListResponse></code>) in docker
+        /// </summary>
+        /// <param name="limit">Limit of number for getting</param>
+        /// <returns><code>IList<ContainerListResponse></code></returns>
+        public async Task<IList<ContainerListResponse>> GetContainersListAsync(int limit) =>
             await client.Containers.ListContainersAsync(new ContainersListParameters() { Limit = limit });
 
+        public Task<string> CreateContainerAsync()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<bool> DeleteContainerAsync(string conatinerId)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<bool> StartContainerAsync(string containerId)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public async Task<bool> StopContainerAsync(string containerId) =>
+            await client.Containers.StopContainerAsync(
+                containerId,
+                new ContainerStopParameters
+                {
+                    WaitBeforeKillSeconds = 30
+                },
+                CancellationToken.None);
+        #endregion
+
+        public Task<bool> SetDefualtContainerAsync()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        #region Images Manager
+        /// <summary>
+        /// Async methode for getting list of images (<code>IList<ImagesListResponse></code>) in docker
+        /// </summary>
+        /// <returns><code>IList<ImagesListResponse></code></returns>
+        public async Task<IList<ImagesListResponse>> GetImagesListAsync() =>
+            await client.Images.ListImagesAsync(new ImagesListParameters() { All = true });
+
+        /// <summary>
+        /// Async method for creating docker image with image data frome configs (IOptions) 
+        /// </summary>
+        /// <returns><code>string</code>ID of new image</returns>
         public async Task<string> CreateImageAsync() =>
             await CreateImageAsync(ImageSettings.ImageName, ImageSettings.ImageTag);
 
+        /// <summary>
+        /// Async method for creating docker image
+        /// </summary>
+        /// <param name="image">Image name</param>
+        /// <param name="tag">Image tag</param>
+        /// <param name="useDockerHub"><code>bool</code>Flag of using Docker Hub</param>
+        /// <returns><code>string</code>ID of new image</returns>
+        /// <exception cref="ArgumentException"></exception>
         public async Task<string> CreateImageAsync(string image, string tag, bool useDockerHub = false)
         {
             AuthConfig authConfig = null;
@@ -64,34 +124,6 @@ namespace Wirenoid.Core
         {
             throw new System.NotImplementedException();
         }
-
-        public Task<string> CreateContainerAsync()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<bool> DeleteContainerAsync(string conatinerId)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<bool> SetDefualtContainerAsync()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<bool> StartContainerAsync(string containerId)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public async Task<bool> StopContainerAsync(string containerId) => 
-            await client.Containers.StopContainerAsync(
-                containerId, 
-                new ContainerStopParameters
-                {
-                    WaitBeforeKillSeconds = 30
-                },
-                CancellationToken.None);
+        #endregion
     }
 }

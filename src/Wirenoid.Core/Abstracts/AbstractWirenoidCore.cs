@@ -9,7 +9,7 @@ using Wirenoid.Core.Models;
 
 namespace Wirenoid.Core.Abstracts
 {
-    public abstract class AbstractWirenoidCore
+    public abstract class AbstractWirenoidCore : IDisposable
     {
         #region Settings
         protected DockerSettings DockerSettings { get; private set; }
@@ -87,6 +87,15 @@ namespace Wirenoid.Core.Abstracts
                 default:
                     throw new Exception("Unknown error while trying to create a client.");
             }
+        }
+
+        public void Dispose()
+        {
+            DockerSettings = null;
+            DockerHubSettings = null;
+            ImageSettings = null;
+
+            client.Dispose();
         }
     }
 }

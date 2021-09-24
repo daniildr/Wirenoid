@@ -4,6 +4,9 @@ using Microsoft.Extensions.Options;
 using FluentAssertions;
 using FakeItEasy;
 using Wirenoid.Core.Models;
+using Docker.DotNet.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Wirenoid.UnitTest.WirenoidCore
 {
@@ -12,7 +15,7 @@ namespace Wirenoid.UnitTest.WirenoidCore
         [TestCase("", "", "", "")]
         [TestCase("test", "npipe://./pipe/docker_engine", "", "test")]
         [TestCase("", "npipe://./pipe/docker_engine", "", "test")]
-        public void CheckExceptions(
+        public void CheckCreateCoreExceptions(
             string certFile,
             string dockerDaemonPath,
             string password,

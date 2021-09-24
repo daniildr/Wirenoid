@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Wirenoid.Core;
+using Wirenoid.Core.Interfaces;
 using Wirenoid.Core.Models;
 using Wirenoid.WebApi.DbItems;
 
@@ -48,7 +49,7 @@ namespace Wirenoid.WebApi
                         builder.WithOrigins("http://localhost:8080");
                     });
             });
-            services.AddSingleton(typeof(WirenoidCore));
+            services.AddSingleton<IDockerManager, WirenoidCore>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {

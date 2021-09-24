@@ -1,12 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Net;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Options;
-using Docker.DotNet.Models;
 using Wirenoid.Core.Abstracts;
 using Wirenoid.Core.Interfaces;
 using Wirenoid.Core.Models;
+using Docker.DotNet;
+using Docker.DotNet.Models;
 
 namespace Wirenoid.Core
 {
@@ -21,55 +25,250 @@ namespace Wirenoid.Core
         /// <summary>
         /// Async methode for getting list of containers (<code>IList<ContainerListResponse></code>) in docker
         /// </summary>
-        /// <returns><code>IList<ContainerListResponse></code></returns>
-        public async Task<IList<ContainerListResponse>> GetContainersListAsync() =>
-            await GetContainersListAsync(10);
+        /// <param name="limit"><code>string</code>Limit of number for getting. Can be null.</param>
+        /// <param name="all"><code>bool</code>Flag of full getting</param>
+        /// <returns><code>List<ContainerListResponse></code></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public async Task<List<ContainerListResponse>> GetContainersListAsync(int? limit = 10, bool all = false)
+        {
+            if ((limit == null || limit == 0) && !all)
+                throw new ArgumentNullException(nameof(limit), $"The limit mustn't be null or 0");            
+
+            if (limit != null)
+            {
+                if (limit != 0 && all)
+                    throw new ArgumentException($"You must choose of getting mechanism - use limit or get all containers.", nameof(all));
+            }                
+            else
+            {
+                if ((limit != null && all))
+                    throw new ArgumentException($"You must choose of getting mechanism - use limit or get all containers.", nameof(all));
+            }
+                
+
+            return all
+                ? (await client.Containers.ListContainersAsync(new ContainersListParameters() { All = all })).ToList()
+                : (await client.Containers.ListContainersAsync(new ContainersListParameters() { Limit = limit })).ToList();
+        }
 
         /// <summary>
-        /// Async methode for geting list of containers (<code>IList<ContainerListResponse></code>) in docker
+        /// Async methode for getting container info (ContainerListResponse) in docker
         /// </summary>
-        /// <param name="limit">Limit of number for getting</param>
-        /// <returns><code>IList<ContainerListResponse></code></returns>
-        public async Task<IList<ContainerListResponse>> GetContainersListAsync(int limit) =>
-            await client.Containers.ListContainersAsync(new ContainersListParameters() { Limit = limit });
-
-        public Task<string> CreateContainerAsync()
+        /// <param name="id">ID of container</param>
+        /// <returns><code>ContainerListResponse</code></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="DockerContainerNotFoundException"></exception>
+        public async Task<ContainerListResponse> GetContainerAsync([NotNull] string id)
         {
-            throw new System.NotImplementedException();
+            _ = id ??
+                throw new ArgumentNullException(nameof(id));
+
+            return (await GetContainersListAsync(null, true)).Find(x => x.ID == id) ??
+                throw new DockerContainerNotFoundException(HttpStatusCode.NotFound, id);
         }
 
-        public Task<bool> DeleteContainerAsync(string conatinerId)
+        /// <summary>
+        /// Async methode for creating new container
+        /// </summary>
+        /// <param name="name"><code>string</code>Custom name of container</param>
+        /// <param name="image"><code>string</code>Image name</param>
+        /// <param name="tag"><code>string</code>Image tag</param>
+        /// <param name="privatePort"><code>string</code>Internal (private) port of conatainer</param>
+        /// <param name="publicPort"><code>string</code>Public port of container</param>
+        /// <returns><code>string</code>ID of new container</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="Exception"></exception>
+        public async Task<string> CreateContainerAsync(
+            [NotNull] string name, [NotNull] string image, [NotNull] string tag, [NotNull] string privatePort, [NotNull] string publicPort)
         {
-            throw new System.NotImplementedException();
+            _ = name ?? throw new ArgumentNullException(nameof(name));
+            _ = image ?? throw new ArgumentNullException(nameof(image));
+            _ = tag ?? throw new ArgumentNullException(nameof(tag));
+            _ = privatePort ?? throw new ArgumentNullException(nameof(privatePort));
+            _ = publicPort ?? throw new ArgumentNullException(nameof(publicPort));
+
+            var fullImageName = $"{image}:{tag}";
+            var portBindings = new Dictionary<string, IList<PortBinding>>
+            {
+                {
+                    privatePort,
+                    (IList<PortBinding>)new List<PortBinding>()
+                {
+                    new PortBinding()
+                    {
+                        HostPort = publicPort
+                    }
+                }
+                }
+            };
+
+            await client.Containers.CreateContainerAsync(new CreateContainerParameters()
+            {
+                Name = name,
+                Image = fullImageName,
+                HostConfig = new HostConfig()
+                {
+                    PortBindings = portBindings
+                }
+            });
+
+            var containers = await GetContainersListAsync();
+            try
+            {
+                var container = containers.Where(x => x.Names.Any(s => s.Contains(name)) && x.Image == fullImageName).First();
+                return container.ID;
+            }
+            catch (ArgumentNullException ArgNullEx)
+            {
+                throw new ArgumentNullException(
+                    $"One or more of arguments ({nameof(name)}, {nameof(fullImageName)}) for linq-expression \"Where\" are null.",
+                    ArgNullEx);
+            }
+            catch (InvalidOperationException invalidOperationEx)
+            {
+                throw new InvalidOperationException(
+                    $"Container with parameters (name: {name}, image: {image}, tag: {tag}) not created.",
+                    invalidOperationEx);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
-        public Task<bool> StartContainerAsync(string containerId)
+        /// <summary>
+        /// Async methode to delete container by ID
+        /// </summary>
+        /// <param name="id">Container ID</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="DockerContainerNotFoundException"></exception>
+        public async Task DeleteContainerAsync([NotNull] string id)
         {
-            throw new System.NotImplementedException();
+            _ = id ??
+                throw new ArgumentNullException(nameof(id));
+
+            try
+            {
+                await StopContainerAsync(id);                
+            } 
+            catch (DockerContainerNotFoundException)
+            {
+                throw new DockerContainerNotFoundException(HttpStatusCode.NotFound,
+                    $"Methode {nameof(StopContainerAsync)} threw {nameof(DockerContainerNotFoundException)} exception");
+            }
+
+            await client.Containers.RemoveContainerAsync(id, new ContainerRemoveParameters()
+            {
+                Force = true
+            });
         }
 
-        public async Task<bool> StopContainerAsync(string containerId) =>
-            await client.Containers.StopContainerAsync(
-                containerId,
+        /// <summary>
+        /// Async methode to start conteiner by ID
+        /// </summary>
+        /// <param name="id">Container ID</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="DockerContainerNotFoundException"></exception>
+        public async Task StartContainerAsync([NotNull] string id)
+        {
+            _ = id ??
+                throw new ArgumentNullException(nameof(id));
+
+            try
+            {
+                await client.Containers.StartContainerAsync(id, new ContainerStartParameters());
+            } 
+            catch (Exception ex)
+            {
+                try
+                {
+                    var container = await GetContainerAsync(id);
+                    throw new Exception($"Container found. Unexpected Error.", ex);
+                } catch (DockerContainerNotFoundException)
+                {
+                    throw new DockerContainerNotFoundException(HttpStatusCode.NotFound, id);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Async method to stop container by ID
+        /// </summary>
+        /// <param name="id">Container ID</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="DockerContainerNotFoundException"></exception>
+        public async Task StopContainerAsync([NotNull] string id)
+        {
+            _ = id ??
+                throw new ArgumentNullException(nameof(id));
+
+            try
+            {
+                await client.Containers.StopContainerAsync(id,
                 new ContainerStopParameters
                 {
                     WaitBeforeKillSeconds = 30
                 },
                 CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    var container = await GetContainerAsync(id);
+                    throw new Exception($"Container found. Unexpected Error.", ex);
+                }
+                catch (DockerContainerNotFoundException)
+                {
+                    throw new DockerContainerNotFoundException(HttpStatusCode.NotFound, id);
+                }
+            }
+        }            
         #endregion
-
-        public Task<bool> SetDefualtContainerAsync()
-        {
-            throw new System.NotImplementedException();
-        }
 
         #region Images Manager
         /// <summary>
         /// Async methode for getting list of images (<code>IList<ImagesListResponse></code>) in docker
         /// </summary>
         /// <returns><code>IList<ImagesListResponse></code></returns>
-        public async Task<IList<ImagesListResponse>> GetImagesListAsync() =>
-            await client.Images.ListImagesAsync(new ImagesListParameters() { All = true });
+        public async Task<List<ImagesListResponse>> GetImagesListAsync() =>
+            (await client.Images.ListImagesAsync(new ImagesListParameters() { All = true })).ToList();
+
+        /// <summary>
+        /// Async methode for getting image info (<code>ImagesListResponse</code>) in docker by ID
+        /// </summary>
+        /// <param name="id">ID of image</param>
+        /// <returns><code>ImagesListResponse</code></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="DockerImageNotFoundException"></exception>
+        public async Task<ImagesListResponse> GetImageByIdAsync([NotNull] string id)
+        {
+            _ = id ??
+                throw new ArgumentNullException(nameof(id));
+
+            return (await GetImagesListAsync()).Find(x => x.ID == id) ??
+                throw new DockerImageNotFoundException(HttpStatusCode.NotFound, id);
+        }
+
+        /// <summary>
+        /// Async methode for getting image info (<code>ImagesListResponse</code>) in docker by name
+        /// </summary>
+        /// <param name="name">ID of image</param>
+        /// <returns><code>ImagesListResponse</code></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="DockerImageNotFoundException"></exception>
+        public async Task<ImagesListResponse> GetImageByNameAsync([NotNull] string name)
+        {
+            _ = name ??
+                throw new ArgumentNullException(nameof(name));
+
+            return (await GetImagesListAsync()).Find(x => x.RepoTags.Any(s => s.Contains(name))) ??
+                throw new DockerImageNotFoundException(HttpStatusCode.NotFound, name);
+        }
 
         /// <summary>
         /// Async method for creating docker image with image data frome configs (IOptions) 
@@ -86,15 +285,15 @@ namespace Wirenoid.Core
         /// <param name="useDockerHub"><code>bool</code>Flag of using Docker Hub</param>
         /// <returns><code>string</code>ID of new image</returns>
         /// <exception cref="ArgumentException"></exception>
-        public async Task<string> CreateImageAsync(string image, string tag, bool useDockerHub = false)
+        public async Task<string> CreateImageAsync([NotNull] string image, [NotNull] string tag)
         {
             AuthConfig authConfig = null;
-            if (useDockerHub)
+            if (DockerHubSettings.UseDockerHub)
             {
                 if (string.IsNullOrEmpty(DockerHubSettings.Email) ||
                     string.IsNullOrEmpty(DockerHubSettings.Username) ||
                     string.IsNullOrEmpty(DockerHubSettings.Password))
-                    throw new ArgumentException($"Can't use DockerHub, check config {nameof(DockerHubSettings)}", nameof(useDockerHub));
+                    throw new ArgumentException($"Can't use DockerHub, check config {nameof(DockerHubSettings)}", new ArgumentException());
 
                 authConfig = new AuthConfig
                 {
@@ -113,17 +312,16 @@ namespace Wirenoid.Core
                 authConfig,
                 new Progress<JSONMessage>());
 
-            var imagesList = await Task.FromResult(client.Images.ListImagesAsync(new ImagesListParameters() { All = true }));
-
-            var newimage = ((List<ImagesListResponse>)imagesList.Result).Find(x => x.Labels.Values.Contains(image));
-
-            return newimage.ID;
+            return (await GetImageByNameAsync(image)).ID;
         }
 
-        public Task<bool> DeleteImageAsync(string imageId)
-        {
-            throw new System.NotImplementedException();
-        }
+        /// <summary>
+        /// Async method for deleting image
+        /// </summary>
+        /// <param name="imageId"></param>
+        /// <returns></returns>
+        public Task DeleteImageAsync(string imageId) => 
+            client.Images.DeleteImageAsync(imageId, new ImageDeleteParameters() { Force = true, PruneChildren = true});        
         #endregion
     }
 }

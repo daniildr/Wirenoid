@@ -8,6 +8,6 @@ namespace Wirenoid.WebApi.DbItems
         public CacheDbContext(DbContextOptions<CacheDbContext> options)
             : base(options) { }
 
-        public DbSet<LaunchedContainer> launchedContainers { get; set; }
+        public DbSet<LaunchedContainer> LaunchedContainers { get; set; }
     }
 }

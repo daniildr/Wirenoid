@@ -18,31 +18,31 @@ namespace Wirenoid.WebApi.Controllers
 
         [HttpGet(Order = 0)]
         public async Task<List<ImagesListResponse>> GetListOfImagesAsync() =>
-            await _dockerManager.GetImagesListAsync();
+            await DockerManager.GetImagesListAsync();
 
         [HttpGet("{id}", Order = 1)]
         public async Task<ImagesListResponse> GetImageByIdAsync([NotNull] string id) =>
-            await _dockerManager.GetImageByIdAsync(id);
+            await DockerManager.GetImageByIdAsync(id);
 
         [HttpDelete("{id}", Order = 2)]
         public async Task DeleteImageAsync([NotNull] string id) =>
-            await _dockerManager.DeleteImageAsync(id);
+            await DockerManager.DeleteImageAsync(id);
 
         [HttpGet("byName/{name}", Order = 3)]
         public async Task<ImagesListResponse> GetImageByNameAsync([NotNull] string name) =>
-            await _dockerManager.GetImageByNameAsync(name);        
+            await DockerManager.GetImageByNameAsync(name);        
 
 #nullable enable
         [HttpPost("create/", Order = 5)]
         public async Task<string> CreateImageAsync(string? image, string? tags)
         {
             if (string.IsNullOrEmpty(image) && string.IsNullOrEmpty(tags))
-                return await _dockerManager.CreateImageAsync();
+                return await DockerManager.CreateImageAsync();
             else
             {
                 _ = image ?? throw new ArgumentNullException(nameof(image));
                 _ = tags ?? throw new ArgumentNullException(nameof(tags));
-                return await _dockerManager.CreateImageAsync(image, tags);
+                return await DockerManager.CreateImageAsync(image, tags);
             }
         }
 #nullable disable

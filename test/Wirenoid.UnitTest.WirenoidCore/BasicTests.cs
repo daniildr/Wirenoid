@@ -4,9 +4,6 @@ using Microsoft.Extensions.Options;
 using FluentAssertions;
 using FakeItEasy;
 using Wirenoid.Core.Models;
-using Docker.DotNet.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Wirenoid.UnitTest.WirenoidCore
 {

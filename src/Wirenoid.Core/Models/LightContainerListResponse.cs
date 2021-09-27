@@ -2,11 +2,11 @@
 {
     public class LightContainerListResponse
     {
-        public string ID { get; set; }
+        public string Id { get; set; }
 
         public string Image {  get; set; }
 
-        public string ImageID {  get; set; }
+        public string ImageId {  get; set; }
 
         public string Status {  get; set; }
     }

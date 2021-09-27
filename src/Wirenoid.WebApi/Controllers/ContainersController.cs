@@ -16,23 +16,23 @@ namespace Wirenoid.WebApi.Controllers
 
         [HttpGet(Order = 0)]
         public async Task<List<ContainerListResponse>> GetContainersListAsync() =>
-            await _dockerManager.GetContainersListAsync(null, true);
+            await DockerManager.GetContainersListAsync(null, true);
         
         [HttpGet("{id}", Order = 1)]
         public async Task<ContainerListResponse> GetContainerAsync(string id) =>
-            await _dockerManager.GetContainerAsync(id);
+            await DockerManager.GetContainerAsync(id);
 
         [HttpDelete("{id}", Order = 2)]
         public async Task DeleteContainerAsync(string id) =>
-            await _dockerManager.DeleteContainerAsync(id);
+            await DockerManager.DeleteContainerAsync(id);
 
         [HttpGet("start/{id}", Order = 3)]
         public async Task StartContainerAsync(string id) =>
-            await _dockerManager.StartContainerAsync(id);
+            await DockerManager.StartContainerAsync(id);
 
         [HttpGet("stop/{id}", Order = 3)]
         public async Task StopContainerAsync(string id) =>
-            await _dockerManager.StopContainerAsync(id);
+            await DockerManager.StopContainerAsync(id);
 
         [HttpPost("create/")]
         public async Task<string> CreateContainerAsync(
@@ -41,7 +41,7 @@ namespace Wirenoid.WebApi.Controllers
             string tag = "latest",
             string privatePort = "8080/tcp",
             string publicPort = "9999") =>
-            await _dockerManager.CreateContainerAsync(name, image, tag, privatePort, publicPort);
+            await DockerManager.CreateContainerAsync(name, image, tag, privatePort, publicPort);
 
 
     }

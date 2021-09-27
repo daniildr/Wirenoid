@@ -1,6 +1,4 @@
-﻿using Docker.DotNet;
-
-namespace Wirenoid.Core.Models
+﻿namespace Wirenoid.Core.Models
 {
     public class DockerSettings
     {

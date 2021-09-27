@@ -9,12 +9,13 @@ using Wirenoid.Core;
 using Wirenoid.Core.Interfaces;
 using Wirenoid.Core.Models;
 using Wirenoid.WebApi.DbItems;
+using Wirenoid.WebApi.Interfaces;
 
 namespace Wirenoid.WebApi
 {
     public class Startup
     {
-        private const string _wairenoidCorsPolicyName = "_wirenoidCORSPolicyName";
+        private const string WirenoidCorsPolicyName = "_wirenoidCORSPolicyName";
         private readonly OpenApiContact _apiContact = new()
         {
             Name = "Developed by Daniil Drozdov © DaniilDR",
@@ -43,13 +44,14 @@ namespace Wirenoid.WebApi
             services.Configure<NetworkSettings>(Configuration.GetSection("NetworkSettings"));
             services.AddCors(options =>
             {
-                options.AddPolicy(name: _wairenoidCorsPolicyName,
+                options.AddPolicy(name: WirenoidCorsPolicyName,
                     builder =>
                     {
                         builder.WithOrigins("http://localhost:8080");
                     });
             });
             services.AddSingleton<IDockerManager, WirenoidCore>();
+            services.AddSingleton<IStorageAdapter, InMemoryStorage>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -76,7 +78,7 @@ namespace Wirenoid.WebApi
 
             app.UseRouting();
 
-            app.UseCors(_wairenoidCorsPolicyName);
+            app.UseCors(WirenoidCorsPolicyName);
 
             app.UseAuthorization();
 

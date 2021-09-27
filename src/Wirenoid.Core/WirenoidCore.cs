@@ -23,10 +23,10 @@ namespace Wirenoid.Core
 
         #region Container Manager
         /// <summary>
-        /// Async methode for getting list of containers (<code>IList<ContainerListResponse></code>) in docker
+        /// Async method for getting list of containers (<code>IList<ContainerListResponse></code>) in docker
         /// </summary>
-        /// <param name="limit"><code>string</code>Limit of number for getting. Can be null.</param>
-        /// <param name="all"><code>bool</code>Flag of full getting</param>
+        /// <param name="limit">Limit of number for getting. Can be null.</param>
+        /// <param name="all">Flag of full getting</param>
         /// <returns><code>List<ContainerListResponse></code></returns>
         /// <exception cref="ArgumentNullException"></exception>
         public async Task<List<ContainerListResponse>> GetContainersListAsync(int? limit = 10, bool all = false)
@@ -47,12 +47,12 @@ namespace Wirenoid.Core
                 
 
             return all
-                ? (await client.Containers.ListContainersAsync(new ContainersListParameters() { All = all })).ToList()
-                : (await client.Containers.ListContainersAsync(new ContainersListParameters() { Limit = limit })).ToList();
+                ? (await Client.Containers.ListContainersAsync(new ContainersListParameters() { All = all })).ToList()
+                : (await Client.Containers.ListContainersAsync(new ContainersListParameters() { Limit = limit })).ToList();
         }
 
         /// <summary>
-        /// Async methode for getting container info (ContainerListResponse) in docker
+        /// Async method for getting container info (ContainerListResponse) in docker
         /// </summary>
         /// <param name="id">ID of container</param>
         /// <returns><code>ContainerListResponse</code></returns>
@@ -68,14 +68,14 @@ namespace Wirenoid.Core
         }
 
         /// <summary>
-        /// Async methode for creating new container
+        /// Async method for creating new container
         /// </summary>
-        /// <param name="name"><code>string</code>Custom name of container</param>
-        /// <param name="image"><code>string</code>Image name</param>
-        /// <param name="tag"><code>string</code>Image tag</param>
-        /// <param name="privatePort"><code>string</code>Internal (private) port of conatainer</param>
-        /// <param name="publicPort"><code>string</code>Public port of container</param>
-        /// <returns><code>string</code>ID of new container</returns>
+        /// <param name="name">Custom name of container</param>
+        /// <param name="image">Image name</param>
+        /// <param name="tag">Image tag</param>
+        /// <param name="privatePort">Internal (private) port of container</param>
+        /// <param name="publicPort">Public port of container</param>
+        /// <returns>ID of new container</returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="Exception"></exception>
@@ -103,7 +103,7 @@ namespace Wirenoid.Core
                 }
             };
 
-            await client.Containers.CreateContainerAsync(new CreateContainerParameters()
+            await Client.Containers.CreateContainerAsync(new CreateContainerParameters()
             {
                 Name = name,
                 Image = fullImageName,
@@ -119,11 +119,11 @@ namespace Wirenoid.Core
                 var container = containers.Where(x => x.Names.Any(s => s.Contains(name)) && x.Image == fullImageName).First();
                 return container.ID;
             }
-            catch (ArgumentNullException ArgNullEx)
+            catch (ArgumentNullException argNullEx)
             {
                 throw new ArgumentNullException(
                     $"One or more of arguments ({nameof(name)}, {nameof(fullImageName)}) for linq-expression \"Where\" are null.",
-                    ArgNullEx);
+                    argNullEx);
             }
             catch (InvalidOperationException invalidOperationEx)
             {
@@ -138,7 +138,7 @@ namespace Wirenoid.Core
         }
 
         /// <summary>
-        /// Async methode to delete container by ID
+        /// Async method to delete container by ID
         /// </summary>
         /// <param name="id">Container ID</param>
         /// <returns></returns>
@@ -156,17 +156,17 @@ namespace Wirenoid.Core
             catch (DockerContainerNotFoundException)
             {
                 throw new DockerContainerNotFoundException(HttpStatusCode.NotFound,
-                    $"Methode {nameof(StopContainerAsync)} threw {nameof(DockerContainerNotFoundException)} exception");
+                    $"method {nameof(StopContainerAsync)} threw {nameof(DockerContainerNotFoundException)} exception");
             }
 
-            await client.Containers.RemoveContainerAsync(id, new ContainerRemoveParameters()
+            await Client.Containers.RemoveContainerAsync(id, new ContainerRemoveParameters()
             {
                 Force = true
             });
         }
 
         /// <summary>
-        /// Async methode to start conteiner by ID
+        /// Async method to start container by ID
         /// </summary>
         /// <param name="id">Container ID</param>
         /// <returns></returns>
@@ -179,7 +179,7 @@ namespace Wirenoid.Core
 
             try
             {
-                await client.Containers.StartContainerAsync(id, new ContainerStartParameters());
+                await Client.Containers.StartContainerAsync(id, new ContainerStartParameters());
             } 
             catch (Exception ex)
             {
@@ -208,7 +208,7 @@ namespace Wirenoid.Core
 
             try
             {
-                await client.Containers.StopContainerAsync(id,
+                await Client.Containers.StopContainerAsync(id,
                 new ContainerStopParameters
                 {
                     WaitBeforeKillSeconds = 30
@@ -232,14 +232,14 @@ namespace Wirenoid.Core
 
         #region Images Manager
         /// <summary>
-        /// Async methode for getting list of images (<code>IList<ImagesListResponse></code>) in docker
+        /// Async method for getting list of images (<code>IList<ImagesListResponse></code>) in docker
         /// </summary>
         /// <returns><code>IList<ImagesListResponse></code></returns>
         public async Task<List<ImagesListResponse>> GetImagesListAsync() =>
-            (await client.Images.ListImagesAsync(new ImagesListParameters() { All = true })).ToList();
+            (await Client.Images.ListImagesAsync(new ImagesListParameters() { All = true })).ToList();
 
         /// <summary>
-        /// Async methode for getting image info (<code>ImagesListResponse</code>) in docker by ID
+        /// Async method for getting image info (<code>ImagesListResponse</code>) in docker by ID
         /// </summary>
         /// <param name="id">ID of image</param>
         /// <returns><code>ImagesListResponse</code></returns>
@@ -255,7 +255,7 @@ namespace Wirenoid.Core
         }
 
         /// <summary>
-        /// Async methode for getting image info (<code>ImagesListResponse</code>) in docker by name
+        /// Async method for getting image info (<code>ImagesListResponse</code>) in docker by name
         /// </summary>
         /// <param name="name">ID of image</param>
         /// <returns><code>ImagesListResponse</code></returns>
@@ -273,7 +273,7 @@ namespace Wirenoid.Core
         /// <summary>
         /// Async method for creating docker image with image data frome configs (IOptions) 
         /// </summary>
-        /// <returns><code>string</code>ID of new image</returns>
+        /// <returns>ID of new image</returns>
         public async Task<string> CreateImageAsync() =>
             await CreateImageAsync(ImageSettings.ImageName, ImageSettings.ImageTag);
 
@@ -282,8 +282,7 @@ namespace Wirenoid.Core
         /// </summary>
         /// <param name="image">Image name</param>
         /// <param name="tag">Image tag</param>
-        /// <param name="useDockerHub"><code>bool</code>Flag of using Docker Hub</param>
-        /// <returns><code>string</code>ID of new image</returns>
+        /// <returns>ID of new image</returns>
         /// <exception cref="ArgumentException"></exception>
         public async Task<string> CreateImageAsync([NotNull] string image, [NotNull] string tag)
         {
@@ -303,7 +302,7 @@ namespace Wirenoid.Core
                 };
             }                
 
-            await client.Images.CreateImageAsync(
+            await Client.Images.CreateImageAsync(
                 new ImagesCreateParameters
                 {
                     FromImage = image,
@@ -321,7 +320,7 @@ namespace Wirenoid.Core
         /// <param name="imageId"></param>
         /// <returns></returns>
         public Task DeleteImageAsync(string imageId) => 
-            client.Images.DeleteImageAsync(imageId, new ImageDeleteParameters() { Force = true, PruneChildren = true});        
+            Client.Images.DeleteImageAsync(imageId, new ImageDeleteParameters() { Force = true, PruneChildren = true});        
         #endregion
     }
 }

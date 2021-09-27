@@ -5,11 +5,11 @@ namespace Wirenoid.WebApi.Controllers.Abstracts
 {
     public abstract class AbstractDockerController : ControllerBase
     {
-        protected readonly IDockerManager _dockerManager;
+        protected readonly IDockerManager DockerManager;
 
         public AbstractDockerController(IDockerManager dockerManager)
         {
-            _dockerManager = dockerManager;
+            DockerManager = dockerManager;
         }
     }
 }

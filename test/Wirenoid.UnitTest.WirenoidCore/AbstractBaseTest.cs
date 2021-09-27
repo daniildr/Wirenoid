@@ -7,7 +7,7 @@ namespace Wirenoid.UnitTest.WirenoidCore
     [TestFixture]
     public abstract class AbstractBaseTest
     {
-        protected Core.WirenoidCore wirenoidCore;
+        protected Core.WirenoidCore WirenoidCore;
 
         protected IOptions<DockerSettings> DockerSettings { get; set; }
 

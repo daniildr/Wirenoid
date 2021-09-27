@@ -21,9 +21,9 @@ namespace Wirenoid.Core.Abstracts
         //protected NetworkSettings NetworkSettings { get; private set; }
         #endregion
 
-        protected DockerClient client;
+        protected DockerClient Client;
 
-        public AbstractWirenoidCore(
+        protected AbstractWirenoidCore(
             IOptions<DockerSettings> dockerSettings,
             IOptions<DockerHubSettings> dockerHubSettings,
             IOptions<DockerImageSettings> dockerImageSettings)
@@ -40,7 +40,7 @@ namespace Wirenoid.Core.Abstracts
                     typeof(DockerSettings),
                     new List<string>()
                     {
-                        "You need to specify the path to the docker deman.",
+                        "You need to specify the path to the docker daemon.",
                     });
 
             if (!string.IsNullOrEmpty(DockerSettings.Username) && !string.IsNullOrEmpty(DockerSettings.CertFile))
@@ -70,17 +70,17 @@ namespace Wirenoid.Core.Abstracts
                 case BasicAuthCredentials cred:
                     {
                         var config = new DockerClientConfiguration(new Uri(DockerSettings.DockerDaemonPath), cred);
-                        client = config.CreateClient();
+                        Client = config.CreateClient();
                     }
                     break;
                 case CertificateCredentials cred:
                     {
                         var config = new DockerClientConfiguration(new Uri(DockerSettings.DockerDaemonPath), cred);
-                        client = config.CreateClient();
+                        Client = config.CreateClient();
                     }
                     break;
                 case null:
-                    client = new DockerClientConfiguration(
+                    Client = new DockerClientConfiguration(
                         new Uri(DockerSettings.DockerDaemonPath))
                         .CreateClient();
                     break;
@@ -95,7 +95,8 @@ namespace Wirenoid.Core.Abstracts
             DockerHubSettings = null;
             ImageSettings = null;
 
-            client.Dispose();
+            Client.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }
